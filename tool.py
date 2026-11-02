@@ -18,7 +18,7 @@ def init_db():
         """
         CREATE TABLE IF NOT EXISTS teams (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
             start_year INTEGER NOT NULL,
             end_year INTEGER NOT NULL
         )
@@ -124,26 +124,23 @@ class F1DatabaseApp:
             messagebox.showwarning("Input Error", "First year lower than last😭.")
             return
 
-        try:
-            conn = sqlite3.connect(DB_NAME)
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO teams (name, start_year, end_year) VALUES (?, ?, ?)",
-                (name, start_yr, end_yr),
-            )
-            conn.commit()
-            conn.close()
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO teams (name, start_year, end_year) VALUES (?, ?, ?)",
+            (name, start_yr, end_yr),
+        )
+        conn.commit()
+        conn.close()
 
-            self.name_entry.delete(0, tk.END)
-            self.start_entry.delete(0, tk.END)
-            self.end_entry.delete(0, tk.END)
-            self.name_entry.focus()
+        self.name_entry.delete(0, tk.END)
+        self.start_entry.delete(0, tk.END)
+        self.end_entry.delete(0, tk.END)
+        self.name_entry.focus()
 
-            self.update_year_dropdown()
+        self.update_year_dropdown()
 
-            messagebox.showinfo("Success", f"Added team '{name}' successfully.")
-        except sqlite3.IntegrityError:
-            messagebox.showerror("Error", "This team already exists bruh.")
+        messagebox.showinfo("Success", f"Added team '{name}' successfully.")
 
     def show_teams_popup(self):
         selected_year = self.year_dropdown.get()
@@ -158,7 +155,7 @@ class F1DatabaseApp:
         cursor.execute(
             """
             SELECT name
-            FROM teams 
+            FROM teams
             WHERE ? BETWEEN start_year AND end_year
             ORDER BY name ASC
         """,
@@ -290,20 +287,17 @@ class F1DatabaseApp:
                 messagebox.showwarning("Error", "First year lower than last😭.")
                 return
 
-            try:
-                conn = sqlite3.connect(DB_NAME)
-                cursor = conn.cursor()
-                cursor.execute(
-                    "UPDATE teams SET name = ?, start_year = ?, end_year = ? WHERE id = ?",
-                    (name, start_yr, end_yr, team_id),
-                )
-                conn.commit()
-                conn.close()
-                load_data()
-                self.update_year_dropdown()
-                messagebox.showinfo("Success", "Team updated successfully.")
-            except sqlite3.IntegrityError:
-                messagebox.showerror("Error", "Team name already exists.")
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE teams SET name = ?, start_year = ?, end_year = ? WHERE id = ?",
+                (name, start_yr, end_yr, team_id),
+            )
+            conn.commit()
+            conn.close()
+            load_data()
+            self.update_year_dropdown()
+            messagebox.showinfo("Success", "Team updated successfully.")
 
         def delete_team():
             team_id = selected_id.get()
@@ -324,7 +318,7 @@ class F1DatabaseApp:
                 selected_id.set("")
                 messagebox.showinfo("Success", "Team deleted.")
 
-        btn_frame = ttk.Frame(popup)
+        btn_frame = ttk.Factory if hasattr(ttk, 'Factory') else ttk.Frame(popup)
         btn_frame.pack(pady=5)
 
         ttk.Button(btn_frame, text="Save Changes", command=update_team).pack(side="left", padx=5)
