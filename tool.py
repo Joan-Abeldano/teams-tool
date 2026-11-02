@@ -1,6 +1,8 @@
 import sqlite3
 import tkinter as tk
 from tkinter import messagebox, ttk
+import sys
+import os
 
 if getattr(sys, "frozen", False):
     application_path = os.path.dirname(sys.executable)
