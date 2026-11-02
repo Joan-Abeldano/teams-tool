@@ -1,28 +1,54 @@
-name: Build Windows EXE
+name: Build and Release EXE
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-  build:
+  build-and-release:
     runs-on: windows-latest
+
+    permissions:
+      contents: write
+
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
 
-    - name: Build with PyInstaller
-      run: pyinstaller --noconsole --onefile tool.py
+      - name: Build with PyInstaller
+        run: pyinstaller --noconsole --onefile tool.py
 
-    - name: Upload EXE artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: teams-tool-exe
-        path: dist/*.exe
+      - name: Generate Version Tag
+        id: tag
+        shell: pwsh
+        run: |
+          $tagName = "v" + (Get-Date -Format "yyyy.MM.dd.HHmmss")
+          echo "TAG_NAME=$tagName" >> $env:GITHUB_ENV
+          echo "Generated tag: $tagName"
+
+      - name: Create and Push Git Tag
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.io"
+          git tag $env:TAG_NAME
+          git push origin $env:TAG_NAME
+
+      - name: Create GitHub Release and Upload EXE
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: Release ${{ env.TAG_NAME }}
+          body: "Automated Windows executable release built on push to main."
+          files: dist/tool.exe
